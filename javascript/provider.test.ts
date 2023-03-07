@@ -79,12 +79,12 @@ describe('Verify AWS signed provider', () => {
         }
         aws4.sign(options, {
           secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
           // // The following is required if using AWS STS to assume a role
-          // sessionToken: process.env.AWS_SESSION_TOKEN
+          sessionToken: process.env.AWS_SESSION_TOKEN
         });
         const authHeaders = options.headers;
-        console.log(authHeaders)
+        // console.log(authHeaders)
         req.headers['Host'] =
           authHeaders && authHeaders['Host']
             ? authHeaders['Host'].toString()
@@ -98,11 +98,11 @@ describe('Verify AWS signed provider', () => {
             ? authHeaders['Authorization'].toString()
             : '';
 
-        // // The following is required if using AWS STS to assume a role
-        // req.headers['X-Amz-Security-Token'] =
-        //   authHeaders && authHeaders['X-Amz-Security-Token']
-        //     ? authHeaders['X-Amz-Security-Token'].toString()
-        //     : '';
+        // The following is required if using AWS STS to assume a role
+        req.headers['X-Amz-Security-Token'] =
+          authHeaders && authHeaders['X-Amz-Security-Token']
+            ? authHeaders['X-Amz-Security-Token'].toString()
+            : '';
         setAuth = false;
       }
 

@@ -34,6 +34,51 @@ Caveats
 
 1. Follow the AWS guide linked [here](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-create-api-from-example.html) to generate an API gateway from a Swagger 2.0 PetStore definition
 2. Update the endpoints to use AWS IAM authentication by following step 1.1 on this AWS guide [here](https://catalog.us-east-1.prod.workshops.aws/workshops/dc413216-deab-4371-9e4a-879a4f14233d/en-US/4-improve-existing-architecture/task1-apigwauth#1.1-enable-api-gateway-authorization-with-aws-iam)
+3. Create an assumable IAM role
+   1. https://docs.aws.amazon.com/apigateway/latest/developerguide/integrating-api-with-aws-services-lambda.html#api-as-lambda-proxy-setup-iam-role-policies
+   2. Add an AWS trust relationship, replacing the following your required `Principal` `ARN`
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": [
+                    "apigateway.amazonaws.com",
+                    "lambda.amazonaws.com"
+                ],
+                "AWS": "arn:aws:iam::123456789123:user/you"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+```
+
+We will update our API Gateways resource policy to allow access
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::<ACC_ID>:role/lambda_invoke_function_assume_apigw_role"
+            },
+            "Action": "execute-api:Invoke",
+            "Resource": "arn:aws:execute-api:eu-west-2:<ACC_ID>:iv5q8tg1h5/*/*/*"
+        }
+    ]
+}
+```
+
+5. This should allow you to run a command to generate temporary credentials used to access our API. 
+   1. `aws sts assume-role --role-arn arn:aws:iam::<YOUR_ACC_ID>:role/lambda_invoke_function_assume_apigw_role --role-session-name api-gw-access`
+   2. `verify.sh` will run this for you, requiring you to set `ROLE_ARN` for the `lambda_invoke_function_assume_apigw_role`
 
 
 ## Pre-Reqs locally
@@ -57,4 +102,7 @@ Caveats
    1. `npm install`
    2. `npm run test:consumer`
    3. `npm run publish:pacts`
-   4. `npm run test:provider`
+   4. Verifying the provider
+      1. export `ROLE_ARN`
+      2. Run `.verify.sh`
+         1. This will set your temporary AWS credentials to your shell and then call `npm run test:provider`
