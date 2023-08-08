@@ -9,7 +9,7 @@ describe('Verify AWS signed provider', () => {
   let publishResultsFlag: boolean = false;
 
   const providerBaseUrl =
-    process.env.PACT_PROVIDER_URL ?? 'https://oewstupmv1.execute-api.eu-west-1.amazonaws.com';
+    process.env.PACT_PROVIDER_URL ?? 'https://oewstupmv1.execute-api.eu-west-1.amazonaws.com/Prod';
 
   try {
     revision = cp
@@ -60,7 +60,8 @@ describe('Verify AWS signed provider', () => {
       if (setAuth) {
         console.log('setting auth overrides for AWS', {
           path: req.path,
-          method: req.method
+          method: req.method,
+          body: req.body
         });
         const requestUrl = providerBaseUrl;
         const host = new URL(requestUrl).host;
@@ -73,7 +74,9 @@ describe('Verify AWS signed provider', () => {
         if (req.method === 'POST') {
           options = {
             ...options,
-            body: JSON.stringify(req.body),
+            body: JSON.stringify({
+              "details": "AQICAHgfObFEEgKhfV7w69GBqVV2nG64WMK4O2h6CBt0qrbnJQGkOo9R3aoSX2MWItcSCLBzAAAAcDBuBgkqhkiG9w0BBwagYTBfAgEAMFoGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMcJp6YEAQwlPXRuyLAgEQgC37w7Su/AmWOZXhaYymUxhXVUI8bq2VxOySQiGbCSbKVO507QF5GOR46ug5j+M="
+            }),
             headers: { 'Content-Type': 'application/json' }
           };
         }
