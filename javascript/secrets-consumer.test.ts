@@ -37,8 +37,8 @@ const api = (baseUrl = defaultBaseUrl) => ({
 import { PactV3, MatchersV3 } from "@pact-foundation/pact";
 
 const provider = new PactV3({
-  consumer: "test-consumer",
-  provider: "aws-provider",
+  consumer: "post-secrets-proxy-api-secret-store",
+  provider: "post-secrets-secret-store-proxy-api",
 });
 
 const {
