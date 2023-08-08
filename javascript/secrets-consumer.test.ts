@@ -98,7 +98,7 @@ describe("aws signed gateway test", () => {
     return provider.executeTest((mockserver) => {
       const client = api(mockserver.url);
       return client.postToken(details).then((response: Token | RequestError) => {
-        // expect(response).toEqual(expectedResponseBody);
+        expect(response).toEqual(expectedResponseBody);
       });
     });
   });
