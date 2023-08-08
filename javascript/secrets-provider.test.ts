@@ -74,9 +74,7 @@ describe('Verify AWS signed provider', () => {
         if (req.method === 'POST') {
           options = {
             ...options,
-            body: JSON.stringify({
-              "details": "AQICAHgfObFEEgKhfV7w69GBqVV2nG64WMK4O2h6CBt0qrbnJQGkOo9R3aoSX2MWItcSCLBzAAAAcDBuBgkqhkiG9w0BBwagYTBfAgEAMFoGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMcJp6YEAQwlPXRuyLAgEQgC37w7Su/AmWOZXhaYymUxhXVUI8bq2VxOySQiGbCSbKVO507QF5GOR46ug5j+M="
-            }),
+            body: JSON.stringify(req.body),
             headers: { 'Content-Type': 'application/json' }
           };
         }
