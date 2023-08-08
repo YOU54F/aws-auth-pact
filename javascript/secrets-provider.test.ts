@@ -97,7 +97,7 @@ describe('Verify AWS signed provider', () => {
           authHeaders && authHeaders['X-Amz-Date']
             ? authHeaders['X-Amz-Date'].toString()
             : '';
-        req.headers['Authorization'] =
+        req.headers['authorization'] =
           authHeaders && authHeaders['Authorization']
             ? `${authHeaders['Authorization'].toString()}`
             : '';

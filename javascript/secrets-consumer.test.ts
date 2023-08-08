@@ -1,26 +1,25 @@
 import axios from "axios";
 import { aws4Interceptor } from "aws4-axios";
 const interceptor = aws4Interceptor({
-  region: "eu-west-2",
+  region: "eu-west-1",
   service: "execute-api",
 });
 
 axios.interceptors.request.use(interceptor);
 const defaultBaseUrl = "http://your-api.example.com";
 
-interface Pet {
-  id: number;
-  type: string;
-  price: number;
+interface Token {
+  id: string;
+  details: string;
 }
 interface RequestError {
   error: string;
 }
 const api = (baseUrl = defaultBaseUrl) => ({
-  getPets: () =>
+  postToken: (data:string) =>
     axios
-      .post(baseUrl + "/pets")
-      .then((response: { data: Pet[] | { error: string } }) => response.data)
+      .post(baseUrl + "/", {details: data})
+      .then((response: { data: Token[] | { error: string } }) => response.data)
       .catch((error) => {
         if (
           error.response.data.message === "Missing Authentication Token" ||
@@ -38,8 +37,8 @@ const api = (baseUrl = defaultBaseUrl) => ({
 import { PactV3, MatchersV3 } from "@pact-foundation/pact";
 
 const provider = new PactV3({
-  consumer: "secrets-consumer",
-  provider: "secrets-provider",
+  consumer: "test-consumer",
+  provider: "aws-provider",
 });
 
 const {
@@ -55,26 +54,14 @@ const {
 } = MatchersV3;
 
 describe("aws signed gateway test", () => {
-  it("should be able to retrieve all pets when authenticated", () => {
-    const apiPath = "/pets";
+  it("should be able to store creds", () => {
+    const apiPath = "/";
     const expectedStatusCode = 200;
-    const expectedResponseBody = [
-      {
-        id: 1,
-        type: "dog",
-        price: 249.99,
-      },
-      {
-        id: 2,
-        type: "cat",
-        price: 124.99,
-      },
-      {
-        id: 3,
-        type: "fish",
-        price: 0.99,
-      },
-    ];
+    const details = "AQICAHgfObFEEgKhfV7w69GBqVV2nG64WMK4O2h6CBt0qrbnJQGkOo9R3aoSX2MWItcSCLBzAAAAcDBuBgkqhkiG9w0BBwagYTBfAgEAMFoGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMcJp6YEAQwlPXRuyLAgEQgC37w7Su/AmWOZXhaYymUxhXVUI8bq2VxOySQiGbCSbKVO507QF5GOR46ug5j+M="
+    const expectedResponseBody = {
+      id: "c08b1650-f6d6-440f-90d5-3e901534a90e",
+      details
+    }
 
     provider
       .given("I post credentials token")
@@ -83,28 +70,31 @@ describe("aws signed gateway test", () => {
         method: "POST",
         path: apiPath,
         headers: {
-          Host: like("127.0.0.1:55715"),
-          "X-Amz-Date": like("bar"),
-          Authorization: [
+          'Content-Type': 'application/json',
+          'host': MatchersV3.string(),
+          authorization: [
             like(
               "AWS4-HMAC-SHA256 Credential=FOOBAR/20230224/eu-west-2/execute-api/aws4_request"
             ),
             like(
-              "SignedHeaders=host;x-amz-date"
+              "SignedHeaders=content-length;content-type;host;x-amz-date;x-amz-security-token"
             ),
             like(
-              "Signature=e4a49d954be3e0beadfb1577b317e511e1a0864a57d828c6812e2035ee755ad8"
+              "Signature=65406528656037c6a3642f9408a01638869635752815b452450f03803a7923b7"
             ),
           ],
         },
       })
       .willRespondWith({
         status: expectedStatusCode,
-        body: expectedResponseBody,
+        body: {
+          id: MatchersV3.like("c08b1650-f6d6-440f-90d5-3e901534a90e"),
+          details: MatchersV3.like("AQICAHgfObFEEgKhfV7w69GBqVV2nG64WMK4O2h6CBt0qrbnJQGkOo9R3aoSX2MWItcSCLBzAAAAcDBuBgkqhkiG9w0BBwagYTBfAgEAMFoGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMcJp6YEAQwlPXRuyLAgEQgC37w7Su/AmWOZXhaYymUxhXVUI8bq2VxOySQiGbCSbKVO507QF5GOR46ug5j+M=")
+        },
       });
     return provider.executeTest((mockserver) => {
       const client = api(mockserver.url);
-      return client.getPets().then((response: Pet[] | RequestError) => {
+      return client.postToken(details).then((response: Token[] | RequestError) => {
         expect(response).toEqual(expectedResponseBody);
       });
     });
